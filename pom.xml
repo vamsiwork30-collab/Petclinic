@@ -462,7 +462,19 @@
 
         </plugins>
     </build>
-
+    <distributionManagement>
+             <repository>
+                 <id>maven-releases</id>
+                 <name>Nexus Releases</name>
+                 <url>http://43.205.126.243:8081/repository/maven-releases/</url>
+             </repository>
+         
+             <snapshotRepository>
+                 <id>maven-snapshots</id>
+                 <name>Nexus Snapshots</name>
+                 <url>http://43.205.126.243:8081/repository/maven-snapshots/</url>
+             </snapshotRepository>
+   </distributionManagement>
     <profiles>
         <profile>
             <id>H2</id>
@@ -553,15 +565,5 @@
         </repository>
     </repositories>
 
-         <distributionManagement>
-        <repository>
-            <id>maven-releases</id>
-            <url>http://43.205.126.243:8081/repository/maven-releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>maven-snapshots</id>
-            <url>http://43.205.126.243:8081/repository/maven-snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
 
 </project>
