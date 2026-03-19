@@ -2,13 +2,17 @@ pipeline {
     agent any
 
     tools {
-        jdk "jdk17"
-        maven "Maven"
+        jdk 'jdk17'
+        maven 'maven'
+    }
+
+    environment {
+        SCANNER_HOME = tool 'sonarscanner'
     }
 
     stages {
 
-        stage('Git Checkout') {
+        stage('Checkout Code') {
             steps {
                 git branch: 'main',
                     changelog: false,
@@ -17,9 +21,30 @@ pipeline {
             }
         }
 
-        stage('Maven Build') {
+        stage('Build with Maven') {
             steps {
-                sh "mvn clean package -DskipTests"
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Deploy to Nexus') {
+            steps {
+                withMaven(
+                    globalMavenSettingsConfig: 'nexus',
+                    jdk: 'jdk17',
+                    maven: 'maven',
+                    traceability: true
+                ) {
+                    sh 'mvn clean deploy'
+                }
+            }
+        }
+
+        stage('Sonar Qube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarserver') {
+                    sh 'mvn sonar:sonar'
+                }
             }
         }
 
@@ -29,10 +54,28 @@ pipeline {
                     credentialsId: 'dockertoken',
                     url: 'https://index.docker.io/v1/'
                 ) {
-                    sh "docker build -t petclinic ."
-                    sh "docker tag petclinic vamsipothabathuni1/petclinic:latest"
-                    sh "docker push vamsipothabathuni1/petclinic:latest"
+                    sh 'docker build -t petclinic .'
+                    sh 'docker tag petclinic vamsipothabathuni1/petclinic:latest'
+                    sh 'docker push vamsipothabathuni1/petclinic:latest'
                 }
+            }
+        }
+
+        stage('Trivy Scan') {
+            steps {
+                sh 'trivy image vamsipothabathuni1/petclinic:latest'
+            }
+        }
+
+        stage('Dependency Check') {
+            steps {
+                dependencyCheck(
+                    additionalArguments: '--scan ./ --format HTML',
+                    odcInstallation: 'dc'
+                )
+                dependencyCheckPublisher(
+                    pattern: '**/dependency-check-report.xml'
+                )
             }
         }
     }
